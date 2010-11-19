@@ -719,14 +719,17 @@ if ( !jQuery.support.submitBubbles ) {
 			if ( this.nodeName.toLowerCase() !== "form" ) {
 				jQuery.event.add(this, "click.specialSubmit", function( e ) {
 					var elem = e.target,
-						type = elem.type;
+						type = elem.type,
+						form = jQuery( elem ).closest("form");
 
-					if ( (type === "submit" || type === "image") && jQuery( elem ).closest("form").length ) {
+					if ( (type === "submit" || type === "image") && form.length ) {
 						e.liveFired = undefined;
-						return trigger( "submit", this, arguments );
+						var ret = trigger( "submit", this, arguments );
+						if (ret !== false) form[0].submit();
+						return ret;
 					}
 				});
-	 
+
 				jQuery.event.add(this, "keypress.specialSubmit", function( e ) {
 					var elem = e.target,
 						type = elem.type;
