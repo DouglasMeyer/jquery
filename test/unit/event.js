@@ -1839,9 +1839,48 @@ test("delegate with submit", function() {
 	jQuery("#testForm input[name=sub1]").submit();
 	equals( count1, 1, "Verify form submit." );
 	equals( count2, 1, "Verify body submit." );
-	
+
 	jQuery("#body").undelegate();
 	jQuery(document).undelegate();
+});
+
+test("delegate form submit bug in IE8", function() {
+  var iframe = jQuery('#iframe')[0],
+      form = jQuery('#testForm'),
+      button = jQuery('<input type="submit" />').appendTo(form);
+  form.live('submit', function(){
+    button.attr('value', 'Submitting...').attr('disabled', 'disabled');
+  });
+  if (document.createEventObject){
+    // dispatch for IE
+    var evt = document.createEventObject();
+    button[0].fireEvent('onclick',evt)
+  } else {
+    // dispatch for firefox + others
+    var evt = document.createEvent("HTMLEvents");
+    evt.initEvent('click', true, true ); // event type,bubbling,cancelable
+    !button[0].dispatchEvent(evt);
+  }
+  stop();
+  var iframeLoaded = function(){
+    return iframe.contentDocument ? /blank\.html/.test(iframe.contentWindow.document.location) : iframe.contentDocument.location === undefined;
+  };
+  var verified = false,
+      verify = function(){
+        if (verified) return;
+        verified = true;
+        clearInterval(interval);
+        clearTimeout(timeout);
+        start();
+        ok(iframeLoaded(), "Verify form submit.");
+        form.die();
+      },
+      interval = setInterval(function(){
+        if (iframeLoaded()) {
+          verify();
+        }
+      }, 15 ),
+      timeout = setTimeout(verify, 5000 );
 });
 
 test("Non DOM element events", function() {
